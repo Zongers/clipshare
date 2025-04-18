@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClipShare • Secure Clipboard Sync</title>
-<link rel="icon" type="image/png" href="https://i.ibb.co/Wv3nwM9F/local-share-icon.png">
+    <link rel="icon" type="image/png" href="https://i.ibb.co/Wv3nwM9F/local-share-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -537,23 +537,51 @@
             border-radius: 50%;
             width: 36px;
             height: 36px;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            opacity: 0;
             transition: var(--transition);
             z-index: 10;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .clipboard-section:hover .image-copy-btn {
-            opacity: 1;
-        }
-
         .image-copy-btn:hover {
             background: var(--primary-dark);
             transform: scale(1.1);
+        }
+
+        /* Custom code styles */
+        .custom-code-container {
+            margin: 15px 0;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .custom-code-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .custom-code-toggle input {
+            margin: 0;
+        }
+        .custom-code-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+        .code-exists-error {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
         }
 
         @media (max-width: 768px) {
@@ -713,6 +741,20 @@
         <div class="modal-content">
             <h3><i class="fas fa-exclamation-triangle"></i> Start New Session?</h3>
             <p>The previous session data will be permanently deleted from the server. Make sure all participants have saved important information.</p>
+            
+            <div class="custom-code-toggle" id="customCodeToggle">
+                <input type="checkbox" id="useCustomCode">
+                <label for="useCustomCode">Create Own Code!</label>
+            </div>
+            
+            <div class="custom-code-container" id="customCodeContainer">
+                <input type="text" id="customCodeInput" class="custom-code-input" 
+                       placeholder="Enter 8-digit code" maxlength="8" pattern="\d{8}">
+                <div class="code-exists-error" id="codeExistsError">
+                    Session already exists! Please join instead.
+                </div>
+            </div>
+            
             <div class="modal-actions">
                 <button class="btn primary" id="confirmNewSessionBtn">
                     <i class="fas fa-check"></i> Confirm
@@ -938,7 +980,7 @@
             }
         }
 
-        // Receive clipboard content - only when user clicks
+        // Receive clipboard content with auto-copy
         async function receiveClip() {
             if (!currentSessionId) {
                 showNotification("No active session", "error");
@@ -966,14 +1008,36 @@
                 document.getElementById('lastReceivedContentTime').textContent = `Received at: ${now.toLocaleTimeString()}`;
                 
                 if (clipData.isImage) {
-                    document.getElementById('clipContent').textContent = '[Image received - click to copy]';
+                    document.getElementById('clipContent').textContent = '[Image received]';
                     document.getElementById('imagePreview').src = clipData.content;
                     document.getElementById('imagePreview').style.display = 'block';
                     document.getElementById('imageCopyBtn').style.display = 'flex';
+                    
+                    // AUTO-COPY IMAGE WHEN RECEIVED
+                    try {
+                        const blob = await fetch(clipData.content).then(r => r.blob());
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ [blob.type]: blob })
+                        ]);
+                        showNotification('📋 Image auto-copied to clipboard!');
+                    } catch (error) {
+                        console.error("Auto-copy failed:", error);
+                        showNotification('⚠️ Click the image to copy manually', 'warning');
+                    }
+                    
                 } else {
                     document.getElementById('clipContent').textContent = clipData.content;
                     document.getElementById('imagePreview').style.display = 'none';
                     document.getElementById('imageCopyBtn').style.display = 'none';
+                    
+                    // AUTO-COPY TEXT WHEN RECEIVED
+                    try {
+                        await navigator.clipboard.writeText(clipData.content);
+                        showNotification('📋 Text auto-copied to clipboard!');
+                    } catch (error) {
+                        console.error("Auto-copy failed:", error);
+                        showNotification('⚠️ Click text to copy manually', 'warning');
+                    }
                 }
                 
                 document.getElementById('receiveStatus').textContent = "Clip received!";
@@ -984,7 +1048,6 @@
                     document.getElementById('receiveCard').style.transform = "";
                 }, 200);
                 
-                showNotification('📋 Clip loaded! Click to copy to clipboard');
             } catch (error) {
                 console.error(error);
                 document.getElementById('receiveStatus').textContent = "Error receiving clip";
@@ -993,7 +1056,7 @@
             }
         }
 
-        // Copy received content to clipboard when clicked
+        // Manual copy function (for fallback)
         async function copyReceivedContent() {
             if (!lastClipData) {
                 showNotification("No content to copy", "warning");
@@ -1040,7 +1103,44 @@
             document.getElementById('newSessionModal').style.display = 'flex';
         }
 
+        // Custom code creation
+        document.getElementById('useCustomCode').addEventListener('change', function(e) {
+            const container = document.getElementById('customCodeContainer');
+            container.style.display = e.target.checked ? 'block' : 'none';
+            document.getElementById('codeExistsError').style.display = 'none';
+        });
+
+        document.getElementById('customCodeInput').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+            if (e.target.value.length > 8) {
+                e.target.value = e.target.value.slice(0, 8);
+            }
+            document.getElementById('codeExistsError').style.display = 'none';
+        });
+
         async function startNewSession() {
+            const useCustomCode = document.getElementById('useCustomCode').checked;
+            let customCode = document.getElementById('customCodeInput').value;
+            
+            if (useCustomCode) {
+                if (!customCode || customCode.length !== 8) {
+                    showNotification("Please enter a valid 8-digit code", "error");
+                    return;
+                }
+                
+                // Check if code already exists
+                const snapshot = await db.ref(`sessions/${customCode}`).once('value');
+                if (snapshot.exists()) {
+                    document.getElementById('codeExistsError').style.display = 'block';
+                    return;
+                }
+                
+                currentSessionId = customCode;
+            } else {
+                currentSessionId = generateSessionCode();
+            }
+            
+            // Clear previous session data if exists
             if (currentSessionId) {
                 try {
                     await db.ref(`sessions/${currentSessionId}/lastClip`).remove();
@@ -1049,8 +1149,22 @@
                 }
             }
             
+            // Create new session
+            localStorage.setItem('clipShareSession', currentSessionId);
+            await db.ref(`sessions/${currentSessionId}`).set({
+                expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+                created: firebase.database.ServerValue.TIMESTAMP,
+                lastAccessed: firebase.database.ServerValue.TIMESTAMP
+            });
+            
             document.getElementById('newSessionModal').style.display = 'none';
-            createNewSession();
+            updateUI();
+            showNotification(`New session created! Code: ${currentSessionId}`);
+            
+            // Reset custom code UI
+            document.getElementById('useCustomCode').checked = false;
+            document.getElementById('customCodeContainer').style.display = 'none';
+            document.getElementById('customCodeInput').value = '';
         }
 
         function blobToBase64(blob) {
@@ -1092,11 +1206,12 @@
             showNotification('📋 Session code copied!');
         });
         
-        // Make content clickable for copying
+        // Manual copy fallbacks
         document.getElementById('clipContent').addEventListener('click', copyReceivedContent);
         document.getElementById('imagePreview').addEventListener('click', copyReceivedContent);
         document.getElementById('imageCopyBtn').addEventListener('click', copyReceivedContent);
         
+        // Card click handlers
         document.getElementById('sendCard').addEventListener('click', (e) => {
             if (e.target.closest('button') === null) {
                 document.getElementById('sendClip').click();
@@ -1109,6 +1224,7 @@
             }
         });
         
+        // Modal handlers
         document.getElementById('haveCodeBtn').addEventListener('click', () => {
             document.getElementById('codeModal').style.display = 'flex';
             document.getElementById('sessionCodeInput').focus();
@@ -1129,6 +1245,7 @@
             document.getElementById('newSessionModal').style.display = 'none';
         });
         
+        // Input validation
         document.getElementById('sessionCodeInput').addEventListener('input', (e) => {
             e.target.value = e.target.value.replace(/\D/g, '');
             if (e.target.value.length > 8) {
@@ -1136,12 +1253,14 @@
             }
         });
         
+        // Close modals when clicking outside
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
             }
         });
         
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
                 document.getElementById('sendClip').click();
