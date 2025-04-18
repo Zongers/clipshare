@@ -297,6 +297,7 @@
             border: 1px solid var(--border-color);
             transition: var(--transition);
             margin-bottom: 25px;
+            position: relative;
         }
 
         .clipboard-section h3 {
@@ -320,6 +321,7 @@
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
             color: var(--text-primary);
+            cursor: pointer;
         }
 
         [data-theme="dark"] .content {
@@ -446,6 +448,7 @@
             border-radius: 10px;
             display: none;
             border: 1px solid var(--border-color);
+            cursor: pointer;
         }
 
         .sync-time {
@@ -521,6 +524,36 @@
 
         .fade-in-up {
             animation: fadeInUp 0.6s ease forwards;
+        }
+
+        /* Image copy button styles */
+        .image-copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .clipboard-section:hover .image-copy-btn {
+            opacity: 1;
+        }
+
+        .image-copy-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
         }
 
         @media (max-width: 768px) {
@@ -650,6 +683,9 @@
         </div>
 
         <div class="clipboard-section fade-in-up" style="animation-delay: 0.6s;" id="clipPreview">
+            <button class="image-copy-btn" id="imageCopyBtn" title="Copy image to clipboard">
+                <i class="far fa-copy"></i>
+            </button>
             <h3><i class="fas fa-clipboard"></i> Last Received Content</h3>
             <div class="content" id="clipContent">No content received yet. Join a session and check for updates.</div>
             <img id="imagePreview" class="image-preview">
@@ -933,13 +969,11 @@
                     document.getElementById('clipContent').textContent = '[Image received - click to copy]';
                     document.getElementById('imagePreview').src = clipData.content;
                     document.getElementById('imagePreview').style.display = 'block';
-                    
-                    // Don't automatically copy - let user decide
+                    document.getElementById('imageCopyBtn').style.display = 'flex';
                 } else {
                     document.getElementById('clipContent').textContent = clipData.content;
                     document.getElementById('imagePreview').style.display = 'none';
-                    
-                    // Request permission to write to clipboard only when user wants to
+                    document.getElementById('imageCopyBtn').style.display = 'none';
                 }
                 
                 document.getElementById('receiveStatus').textContent = "Clip received!";
@@ -1061,6 +1095,7 @@
         // Make content clickable for copying
         document.getElementById('clipContent').addEventListener('click', copyReceivedContent);
         document.getElementById('imagePreview').addEventListener('click', copyReceivedContent);
+        document.getElementById('imageCopyBtn').addEventListener('click', copyReceivedContent);
         
         document.getElementById('sendCard').addEventListener('click', (e) => {
             if (e.target.closest('button') === null) {
