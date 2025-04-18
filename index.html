@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClipShare • Secure Clipboard Sync</title>
+<link rel="icon" type="image/png" href="https://i.ibb.co/Wv3nwM9F/local-share-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --primary-dark: #5649c0;
+            --send-color: #00b894;
+            --send-light: rgba(0, 184, 148, 0.1);
+            --receive-color: #de2666;
+            --receive-light: rgba(222, 38, 102, 0.1);
+            --session-box-bg: rgba(108, 92, 231, 0.1);
+            --success: #00b894;
+            --danger: #ff7675;
+            --warning: #fdcb6e;
+            --text-primary: #2d3436;
+            --text-secondary: #636e72;
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --border-color: #dfe6e9;
+            --footer-color: #b2bec3;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --glow: 0 0 15px rgba(108, 92, 231, 0.3);
+        }
+
+        [data-theme="dark"] {
+            --primary: #7d6bff;
+            --primary-light: #5a4ac5;
+            --primary-dark: #9a86ff;
+            --send-color: #55efc4;
+            --send-light: rgba(85, 239, 196, 0.15);
+            --receive-color: #ff4d8d;
+            --receive-light: rgba(255, 77, 141, 0.15);
+            --session-box-bg: rgba(125, 107, 255, 0.15);
+            --success: #55efc4;
+            --danger: #ff7675;
+            --warning: #ffeaa7;
+            --text-primary: #f5f6fa;
+            --text-secondary: #dfe6e9;
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --border-color: #2d3436;
+            --footer-color: #636e72;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --glow: 0 0 15px rgba(125, 107, 255, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            padding: 30px;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-weight: 400;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .session-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--session-box-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        #sessionInfo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #sessionCode {
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        #copySession {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 5px;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        #copySession:hover {
+            background: rgba(108, 92, 231, 0.1);
+            transform: scale(1.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn.primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+        }
+
+        .btn.secondary {
+            background: var(--session-box-bg);
+            color: var(--primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn.secondary:hover {
+            background: rgba(108, 92, 231, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn.send {
+            background: var(--send-color);
+            color: white;
+        }
+
+        .btn.send:hover {
+            background: #00a884;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+        }
+
+        .btn.receive {
+            background: var(--receive-color);
+            color: white;
+        }
+
+        .btn.receive:hover {
+            background: #c71e5d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(222, 38, 102, 0.3);
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .action-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .action-card.send:hover {
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.15);
+        }
+
+        .action-card.receive:hover {
+            box-shadow: 0 8px 25px rgba(222, 38, 102, 0.15);
+        }
+
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 1.8rem;
+            transition: var(--transition);
+        }
+
+        .action-card:hover .card-icon {
+            transform: scale(1.1);
+        }
+
+        .card-icon.send {
+            background: var(--send-light);
+            color: var(--send-color);
+        }
+
+        .card-icon.receive {
+            background: var(--receive-light);
+            color: var(--receive-color);
+        }
+
+        .action-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .action-card p {
+            color: var(--text-secondary);
+            opacity: 0.9;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .status {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin: 12px 0;
+            min-height: 20px;
+        }
+
+        .clipboard-section {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            margin-bottom: 25px;
+        }
+
+        .clipboard-section h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .content {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notification {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            padding: 15px 25px;
+            background: var(--success);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            transform: translateX(200%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: var(--danger);
+        }
+
+        .notification.warning {
+            background: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            text-align: center;
+        }
+
+        .modal p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1rem;
+            text-align: center;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            transition: var(--transition);
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 250px;
+            margin-top: 20px;
+            border-radius: 10px;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .sync-time {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 12px;
+            font-weight: 400;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-primary);
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary-light);
+            color: white;
+            transform: rotate(30deg);
+        }
+
+        .new-session-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 50px;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .new-session-btn:hover {
+            color: var(--primary);
+            background: rgba(108, 92, 231, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .action-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .session-box {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            #sessionInfo {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .theme-toggle {
+                top: 20px;
+                right: 20px;
+                width: 36px;
+                height: 36px;
+            }
+            
+            .new-session-btn {
+                position: static;
+                margin: 0 auto 15px;
+                display: inline-flex;
+                justify-content: center;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .action-card {
+                padding: 20px;
+            }
+            
+            .card-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .clipboard-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="fade-in-up" style="animation-delay: 0.1s;">
+            <button class="new-session-btn" id="newSessionBtn">
+                <i class="fas fa-plus-circle"></i> New
+            </button>
+            <h1><i class="fas fa-paperclip"></i> ClipShare</h1>
+            <p class="subtitle">Secure clipboard sync with end-to-end encryption</p>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </header>
+
+        <div class="session-box fade-in-up" style="animation-delay: 0.2s;">
+            <div id="sessionInfo">
+                <span>Your Session Code: <strong id="sessionCode">--------</strong></span>
+                <button id="copySession" title="Copy to clipboard"><i class="far fa-copy"></i></button>
+            </div>
+            <button id="haveCodeBtn" class="btn secondary">
+                <i class="fas fa-sign-in-alt"></i> Join Session
+            </button>
+        </div>
+
+        <div class="action-grid">
+            <div class="action-card send fade-in-up" style="animation-delay: 0.3s;" id="sendCard">
+                <div class="card-icon send"><i class="fas fa-paper-plane"></i></div>
+                <h3>Send Clip</h3>
+                <p>Copy content to clipboard then click to send</p>
+                <button class="btn send" id="sendClip">
+                    <i class="fas fa-upload"></i> Send Now
+                </button>
+                <div class="sync-time" id="lastSentTime"></div>
+            </div>
+
+            <div class="action-card receive fade-in-up" style="animation-delay: 0.4s;" id="receiveCard">
+                <div class="card-icon receive"><i class="fas fa-download"></i></div>
+                <h3>Receive Clip</h3>
+                <p>Click to check for new clipboard content</p>
+                <button class="btn receive" id="receiveClipBtn">
+                    <i class="fas fa-sync-alt"></i> Check Now
+                </button>
+                <div class="status" id="receiveStatus">Waiting for content...</div>
+                <div class="sync-time" id="lastReceivedTime"></div>
+            </div>
+        </div>
+
+        <div class="clipboard-section fade-in-up" style="animation-delay: 0.5s;" id="sentPreview">
+            <h3><i class="fas fa-paper-plane"></i> Last Sent Content</h3>
+            <div class="content" id="sentContent">No content sent yet. Copy something to clipboard and click Send.</div>
+            <img id="sentImagePreview" class="image-preview">
+            <div class="sync-time" id="lastSentContentTime"></div>
+        </div>
+
+        <div class="clipboard-section fade-in-up" style="animation-delay: 0.6s;" id="clipPreview">
+            <h3><i class="fas fa-clipboard"></i> Last Received Content</h3>
+            <div class="content" id="clipContent">No content received yet. Join a session and check for updates.</div>
+            <img id="imagePreview" class="image-preview">
+            <div class="sync-time" id="lastReceivedContentTime"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="codeModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-sign-in-alt"></i> Join Existing Session</h3>
+            <p>Enter the 8-digit session code to connect</p>
+            <input type="text" id="sessionCodeInput" class="modal-input" placeholder="12345678" maxlength="8" pattern="\d{8}">
+            <div class="modal-actions">
+                <button class="btn primary" id="joinSessionBtn">
+                    <i class="fas fa-link"></i> Connect
+                </button>
+                <button class="btn secondary" id="cancelModalBtn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="newSessionModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-exclamation-triangle"></i> Start New Session?</h3>
+            <p>The previous session data will be permanently deleted from the server. Make sure all participants have saved important information.</p>
+            <div class="modal-actions">
+                <button class="btn primary" id="confirmNewSessionBtn">
+                    <i class="fas fa-check"></i> Confirm
+                </button>
+                <button class="btn secondary" id="cancelNewSessionBtn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAAIRYYzJ7ezIIJgF4qRtpV3jaQm4h-0ro",
+            authDomain: "clipshare-a5129.firebaseapp.com",
+            databaseURL: "https://clipshare-a5129-default-rtdb.firebaseio.com",
+            projectId: "clipshare-a5129",
+            storageBucket: "clipshare-a5129.appspot.com",
+            messagingSenderId: "907720983668",
+            appId: "1:907720983668:web:ce2b59176fb20062ac7d21"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        // Session Management
+        let currentSessionId = null;
+        let lastClipData = null;
+        let lastSentData = null;
+        let isDarkMode = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('clipShareTheme');
+            if (savedTheme === 'dark') {
+                enableDarkMode();
+            }
+            
+            // Initialize session without automatically checking clipboard
+            auth.signInAnonymously().then(() => {
+                checkExistingSession();
+            });
+        });
+
+        // Theme Toggle
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+        function toggleTheme() {
+            if (isDarkMode) {
+                disableDarkMode();
+            } else {
+                enableDarkMode();
+            }
+        }
+
+        function enableDarkMode() {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+            isDarkMode = true;
+            localStorage.setItem('clipShareTheme', 'dark');
+        }
+
+        function disableDarkMode() {
+            document.documentElement.removeAttribute('data-theme');
+            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-moon"></i>';
+            isDarkMode = false;
+            localStorage.setItem('clipShareTheme', 'light');
+        }
+
+        // Generate random 8-digit code
+        function generateSessionCode() {
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += Math.floor(Math.random() * 10);
+            }
+            return code;
+        }
+
+        // Create new session
+        function createNewSession() {
+            currentSessionId = generateSessionCode();
+            localStorage.setItem('clipShareSession', currentSessionId);
+            
+            db.ref(`sessions/${currentSessionId}`).set({
+                expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+                created: firebase.database.ServerValue.TIMESTAMP,
+                lastAccessed: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            updateUI();
+            showNotification("New session created! Code: " + currentSessionId);
+        }
+
+        // Join existing session
+        function joinSession(code) {
+            if (!code || code.length !== 8 || !/^\d+$/.test(code)) {
+                showNotification("Please enter a valid 8-digit code", "error");
+                return;
+            }
+
+            db.ref(`sessions/${code}`).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    db.ref(`sessions/${code}/lastAccessed`).set(firebase.database.ServerValue.TIMESTAMP);
+                    
+                    currentSessionId = code;
+                    localStorage.setItem('clipShareSession', currentSessionId);
+                    updateUI();
+                    document.getElementById('codeModal').style.display = 'none';
+                    showNotification("Joined session successfully!");
+                    
+                    // Don't automatically receive - wait for user to click
+                } else {
+                    showNotification("Invalid session code", "error");
+                }
+            });
+        }
+
+        // Check for existing session
+        function checkExistingSession() {
+            const savedSession = localStorage.getItem('clipShareSession');
+            if (savedSession) {
+                db.ref(`sessions/${savedSession}`).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        currentSessionId = savedSession;
+                        updateUI();
+                        showNotification("Reconnected to your session");
+                        
+                        // Don't automatically receive - wait for user to click
+                    } else {
+                        createNewSession();
+                    }
+                });
+            } else {
+                createNewSession();
+            }
+        }
+
+        // Send clipboard content - only when user clicks
+        async function sendClip() {
+            if (!currentSessionId) {
+                showNotification("No active session", "error");
+                return;
+            }
+
+            try {
+                let content = '';
+                let isImage = false;
+                
+                // Request clipboard permission only when needed
+                if (navigator.clipboard.read) {
+                    try {
+                        const items = await navigator.clipboard.read();
+                        for (const item of items) {
+                            for (const type of item.types) {
+                                if (type.startsWith('image/')) {
+                                    const blob = await item.getType(type);
+                                    content = await blobToBase64(blob);
+                                    isImage = true;
+                                    break;
+                                }
+                            }
+                            if (isImage) break;
+                        }
+                    } catch (error) {
+                        showNotification('❌ Please grant clipboard permissions to send', 'error');
+                        return;
+                    }
+                }
+                
+                // If no image, try text
+                if (!isImage) {
+                    try {
+                        content = await navigator.clipboard.readText();
+                    } catch (error) {
+                        showNotification('❌ Please grant clipboard permissions to send', 'error');
+                        return;
+                    }
+                }
+                
+                if (!content) {
+                    showNotification('Clipboard is empty or content not supported', 'error');
+                    return;
+                }
+                
+                const clipId = Date.now().toString();
+                const now = new Date();
+                
+                await db.ref(`sessions/${currentSessionId}/lastClip`).set({
+                    id: clipId,
+                    content: content,
+                    isImage: isImage,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    sender: generateDeviceId()
+                });
+                
+                db.ref(`sessions/${currentSessionId}/lastAccessed`).set(firebase.database.ServerValue.TIMESTAMP);
+                
+                lastSentData = { content, isImage };
+                updateLastSentUI();
+                
+                document.getElementById('lastSentTime').textContent = `Sent at: ${now.toLocaleTimeString()}`;
+                document.getElementById('lastSentContentTime').textContent = `Sent at: ${now.toLocaleTimeString()}`;
+                
+                document.getElementById('receiveCard').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('receiveCard').classList.remove('pulse');
+                }, 2000);
+                
+                showNotification('📤 Clip sent successfully!');
+            } catch (error) {
+                console.error(error);
+                showNotification('❌ Failed to send clip', 'error');
+            }
+        }
+
+        // Receive clipboard content - only when user clicks
+        async function receiveClip() {
+            if (!currentSessionId) {
+                showNotification("No active session", "error");
+                return;
+            }
+
+            try {
+                const snapshot = await db.ref(`sessions/${currentSessionId}/lastClip`).once('value');
+                const clipData = snapshot.val();
+                
+                if (!clipData) {
+                    document.getElementById('receiveStatus').textContent = "No clips available";
+                    showNotification("No clips found in this session", "warning");
+                    return;
+                }
+
+                if (lastClipData && lastClipData.id === clipData.id) {
+                    document.getElementById('receiveStatus').textContent = "No new clips available";
+                    return;
+                }
+                
+                lastClipData = clipData;
+                const now = new Date();
+                document.getElementById('lastReceivedTime').textContent = `Received at: ${now.toLocaleTimeString()}`;
+                document.getElementById('lastReceivedContentTime').textContent = `Received at: ${now.toLocaleTimeString()}`;
+                
+                if (clipData.isImage) {
+                    document.getElementById('clipContent').textContent = '[Image received - click to copy]';
+                    document.getElementById('imagePreview').src = clipData.content;
+                    document.getElementById('imagePreview').style.display = 'block';
+                    
+                    // Don't automatically copy - let user decide
+                } else {
+                    document.getElementById('clipContent').textContent = clipData.content;
+                    document.getElementById('imagePreview').style.display = 'none';
+                    
+                    // Request permission to write to clipboard only when user wants to
+                }
+                
+                document.getElementById('receiveStatus').textContent = "Clip received!";
+                document.getElementById('receiveStatus').style.color = "var(--success)";
+                
+                document.getElementById('receiveCard').style.transform = "scale(0.98)";
+                setTimeout(() => {
+                    document.getElementById('receiveCard').style.transform = "";
+                }, 200);
+                
+                showNotification('📋 Clip loaded! Click to copy to clipboard');
+            } catch (error) {
+                console.error(error);
+                document.getElementById('receiveStatus').textContent = "Error receiving clip";
+                document.getElementById('receiveStatus').style.color = "var(--danger)";
+                showNotification('❌ Failed to receive clip', 'error');
+            }
+        }
+
+        // Copy received content to clipboard when clicked
+        async function copyReceivedContent() {
+            if (!lastClipData) {
+                showNotification("No content to copy", "warning");
+                return;
+            }
+
+            try {
+                if (lastClipData.isImage) {
+                    if (navigator.clipboard.write) {
+                        const blob = await fetch(lastClipData.content).then(r => r.blob());
+                        await navigator.clipboard.write([
+                            new ClipboardItem({
+                                [blob.type]: blob
+                            })
+                        ]);
+                        showNotification('📋 Image copied to clipboard!');
+                    }
+                } else {
+                    await navigator.clipboard.writeText(lastClipData.content);
+                    showNotification('📋 Text copied to clipboard!');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('❌ Failed to copy to clipboard. Please grant permissions.', 'error');
+            }
+        }
+
+        // Update last sent UI
+        function updateLastSentUI() {
+            if (!lastSentData) return;
+            
+            if (lastSentData.isImage) {
+                document.getElementById('sentContent').textContent = '[Image sent]';
+                document.getElementById('sentImagePreview').src = lastSentData.content;
+                document.getElementById('sentImagePreview').style.display = 'block';
+            } else {
+                document.getElementById('sentContent').textContent = lastSentData.content;
+                document.getElementById('sentImagePreview').style.display = 'none';
+            }
+        }
+
+        // Start new session with confirmation
+        function confirmNewSession() {
+            document.getElementById('newSessionModal').style.display = 'flex';
+        }
+
+        async function startNewSession() {
+            if (currentSessionId) {
+                try {
+                    await db.ref(`sessions/${currentSessionId}/lastClip`).remove();
+                } catch (e) {
+                    console.log("Couldn't delete previous session data:", e);
+                }
+            }
+            
+            document.getElementById('newSessionModal').style.display = 'none';
+            createNewSession();
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        function generateDeviceId() {
+            let deviceId = localStorage.getItem('clipShareDeviceId');
+            if (!deviceId) {
+                deviceId = 'device-' + Math.random().toString(36).substr(2, 8);
+                localStorage.setItem('clipShareDeviceId', deviceId);
+            }
+            return deviceId;
+        }
+
+        function updateUI() {
+            document.getElementById('sessionCode').textContent = currentSessionId;
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.innerHTML = type === 'success' ? 
+                `<i class="fas fa-check-circle"></i> ${message}` :
+                `<i class="fas fa-exclamation-circle"></i> ${message}`;
+                
+            notification.className = `notification ${type} show`;
+            setTimeout(() => notification.className = 'notification', 3000);
+        }
+
+        // Event Listeners
+        document.getElementById('sendClip').addEventListener('click', sendClip);
+        document.getElementById('receiveClipBtn').addEventListener('click', receiveClip);
+        document.getElementById('copySession').addEventListener('click', () => {
+            navigator.clipboard.writeText(currentSessionId);
+            showNotification('📋 Session code copied!');
+        });
+        
+        // Make content clickable for copying
+        document.getElementById('clipContent').addEventListener('click', copyReceivedContent);
+        document.getElementById('imagePreview').addEventListener('click', copyReceivedContent);
+        
+        document.getElementById('sendCard').addEventListener('click', (e) => {
+            if (e.target.closest('button') === null) {
+                document.getElementById('sendClip').click();
+            }
+        });
+        
+        document.getElementById('receiveCard').addEventListener('click', (e) => {
+            if (e.target.closest('button') === null) {
+                document.getElementById('receiveClipBtn').click();
+            }
+        });
+        
+        document.getElementById('haveCodeBtn').addEventListener('click', () => {
+            document.getElementById('codeModal').style.display = 'flex';
+            document.getElementById('sessionCodeInput').focus();
+        });
+        
+        document.getElementById('joinSessionBtn').addEventListener('click', () => {
+            const code = document.getElementById('sessionCodeInput').value;
+            joinSession(code);
+        });
+        
+        document.getElementById('cancelModalBtn').addEventListener('click', () => {
+            document.getElementById('codeModal').style.display = 'none';
+        });
+        
+        document.getElementById('newSessionBtn').addEventListener('click', confirmNewSession);
+        document.getElementById('confirmNewSessionBtn').addEventListener('click', startNewSession);
+        document.getElementById('cancelNewSessionBtn').addEventListener('click', () => {
+            document.getElementById('newSessionModal').style.display = 'none';
+        });
+        
+        document.getElementById('sessionCodeInput').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '');
+            if (e.target.value.length > 8) {
+                e.target.value = e.target.value.slice(0, 8);
+            }
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('sendClip').click();
+            }
+            
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
