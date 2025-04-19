@@ -82,6 +82,7 @@
             padding: 30px;
             position: relative;
             transition: var(--transition);
+            margin-bottom: 20px;
         }
 
         header {
@@ -147,6 +148,49 @@
         #copySession:hover {
             background: rgba(108, 92, 231, 0.1);
             transform: scale(1.1);
+        }
+
+        /* Live status dot styles */
+        .live-dot {
+            position: relative;
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .live-dot::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            width: 18px;
+            height: 18px;
+            background-color: rgba(108, 92, 231, 0.4);
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: pulseRing 5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulseRing {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            2% {
+                opacity: 1;
+            }
+            10% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
         }
 
         .btn {
@@ -583,6 +627,40 @@
             margin-top: 5px;
             display: none;
         }
+        
+        /* Advanced options styles */
+        .advanced-options {
+            margin-top: 10px;
+            display: none;
+        }
+        .advanced-options label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        /* How it works section */
+        .how-it-works {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .how-it-works:hover {
+            color: var(--primary);
+        }
+        
+        /* Footer styles */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--footer-color);
+            font-size: 0.85rem;
+        }
 
         @media (max-width: 768px) {
             .container {
@@ -672,7 +750,7 @@
 
         <div class="session-box fade-in-up" style="animation-delay: 0.2s;">
             <div id="sessionInfo">
-                <span>Your Session Code: <strong id="sessionCode">--------</strong></span>
+                <span><span class="live-dot"></span>Your Session Code: <strong id="sessionCode">--------</strong></span>
                 <button id="copySession" title="Copy to clipboard"><i class="far fa-copy"></i></button>
             </div>
             <button id="haveCodeBtn" class="btn secondary">
@@ -719,13 +797,21 @@
             <img id="imagePreview" class="image-preview">
             <div class="sync-time" id="lastReceivedContentTime"></div>
         </div>
+        
+        <div class="how-it-works" id="howItWorksBtn">
+            <i class="fas fa-question-circle"></i> How it works?
+        </div>
+    </div>
+    
+    <div class="footer">
+        &copy; 2025 ClipShare. All rights reserved.
     </div>
 
     <div class="modal" id="codeModal">
         <div class="modal-content">
             <h3><i class="fas fa-sign-in-alt"></i> Join Existing Session</h3>
-            <p>Enter the 8-digit session code to connect</p>
-            <input type="text" id="sessionCodeInput" class="modal-input" placeholder="12345678" maxlength="8" pattern="\d{8}">
+            <p>Enter the session code to connect</p>
+            <input type="text" id="sessionCodeInput" class="modal-input" placeholder="Enter session code">
             <div class="modal-actions">
                 <button class="btn primary" id="joinSessionBtn">
                     <i class="fas fa-link"></i> Connect
@@ -750,6 +836,13 @@
             <div class="custom-code-container" id="customCodeContainer">
                 <input type="text" id="customCodeInput" class="custom-code-input" 
                        placeholder="Enter 8-digit code" maxlength="8" pattern="\d{8}">
+                
+                <div class="advanced-options" id="advancedOptions">
+                    <label>
+                        <input type="checkbox" id="includeSymbols"> Include letters and symbols
+                    </label>
+                </div>
+                
                 <div class="code-exists-error" id="codeExistsError">
                     Session already exists! Please join instead.
                 </div>
@@ -763,6 +856,38 @@
                     <i class="fas fa-times"></i> Cancel
                 </button>
             </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="howItWorksModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-question-circle"></i> How ClipShare Works</h3>
+            
+            <h4 style="margin-top: 15px; color: var(--primary);">Sending Content</h4>
+            <ol style="margin-bottom: 15px; padding-left: 20px;">
+                <li>Copy any text or image to your clipboard</li>
+                <li>Click the "Send Now" button</li>
+                <li>Your content will be securely sent to all connected devices</li>
+            </ol>
+            
+            <h4 style="margin-top: 15px; color: var(--primary);">Receiving Content</h4>
+            <ol style="margin-bottom: 15px; padding-left: 20px;">
+                <li>Join a session using the same session code</li>
+                <li>Click "Check Now" to receive new content</li>
+                <li>Received content will be automatically copied to your clipboard</li>
+            </ol>
+            
+            <h4 style="margin-top: 15px; color: var(--primary);">Features</h4>
+            <ul style="margin-bottom: 20px; padding-left: 20px;">
+                <li>End-to-end encrypted transfers</li>
+                <li>Supports both text and images</li>
+                <li>Works across different devices and platforms</li>
+                <li>Session expires after 24 hours of inactivity</li>
+            </ul>
+            
+            <button class="btn primary" id="closeHowItWorks" style="width: 100%;">
+                <i class="fas fa-check"></i> Got it!
+            </button>
         </div>
     </div>
 
@@ -843,6 +968,16 @@
             return code;
         }
 
+        // Generate random code with letters and symbols
+        function generateComplexCode(length = 16) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+            let code = '';
+            for (let i = 0; i < length; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
         // Create new session
         function createNewSession() {
             currentSessionId = generateSessionCode();
@@ -860,8 +995,8 @@
 
         // Join existing session
         function joinSession(code) {
-            if (!code || code.length !== 8 || !/^\d+$/.test(code)) {
-                showNotification("Please enter a valid 8-digit code", "error");
+            if (!code || code.length < 8) {
+                showNotification("Session code must be at least 8 characters", "error");
                 return;
             }
 
@@ -1106,26 +1241,73 @@
         // Custom code creation
         document.getElementById('useCustomCode').addEventListener('change', function(e) {
             const container = document.getElementById('customCodeContainer');
+            const advancedOptions = document.getElementById('advancedOptions');
+            
             container.style.display = e.target.checked ? 'block' : 'none';
+            advancedOptions.style.display = 'none';
             document.getElementById('codeExistsError').style.display = 'none';
+            
+            // Reset to default 8-digit numeric code
+            document.getElementById('customCodeInput').value = '';
+            document.getElementById('customCodeInput').placeholder = "Enter 8-digit code";
+            document.getElementById('customCodeInput').maxLength = 8;
+            document.getElementById('customCodeInput').pattern = "\\d{8}";
+            document.getElementById('includeSymbols').checked = false;
         });
 
-        document.getElementById('customCodeInput').addEventListener('input', function(e) {
-            e.target.value = e.target.value.replace(/\D/g, '');
-            if (e.target.value.length > 8) {
-                e.target.value = e.target.value.slice(0, 8);
+        // Toggle advanced options
+        document.getElementById('includeSymbols').addEventListener('change', function(e) {
+            const input = document.getElementById('customCodeInput');
+            input.value = ''; // Clear current input
+            
+            if (e.target.checked) {
+                // Allow letters/symbols (8-32 chars)
+                input.placeholder = "Enter code (8-32 chars)";
+                input.maxLength = 32;
+                input.removeAttribute('pattern');
+                input.removeAttribute('inputmode');
+            } else {
+                // Restrict to numbers only (8 digits)
+                input.placeholder = "Enter 8-digit code";
+                input.maxLength = 8;
+                input.pattern = "\\d{8}";
+                input.setAttribute('inputmode', 'numeric');
             }
+        });
+
+        // Input validation for custom code
+        document.getElementById('customCodeInput').addEventListener('input', function(e) {
+            const includeSymbols = document.getElementById('includeSymbols').checked;
+            
+            if (!includeSymbols) {
+                // Only allow numbers
+                e.target.value = e.target.value.replace(/\D/g, '');
+                if (e.target.value.length > 8) {
+                    e.target.value = e.target.value.slice(0, 8);
+                }
+            }
+            // For includeSymbols=true, no restrictions beyond length (handled by maxLength)
+            
             document.getElementById('codeExistsError').style.display = 'none';
         });
 
         async function startNewSession() {
             const useCustomCode = document.getElementById('useCustomCode').checked;
+            const includeSymbols = document.getElementById('includeSymbols').checked;
             let customCode = document.getElementById('customCodeInput').value;
             
             if (useCustomCode) {
-                if (!customCode || customCode.length !== 8) {
-                    showNotification("Please enter a valid 8-digit code", "error");
-                    return;
+                // Validate custom code
+                if (includeSymbols) {
+                    if (!customCode || customCode.length < 8) {
+                        showNotification("Code must be at least 8 characters", "error");
+                        return;
+                    }
+                } else {
+                    if (!customCode || customCode.length !== 8 || !/^\d+$/.test(customCode)) {
+                        showNotification("Please enter a valid 8-digit code", "error");
+                        return;
+                    }
                 }
                 
                 // Check if code already exists
@@ -1137,7 +1319,7 @@
                 
                 currentSessionId = customCode;
             } else {
-                currentSessionId = generateSessionCode();
+                currentSessionId = includeSymbols ? generateComplexCode(16) : generateSessionCode();
             }
             
             // Clear previous session data if exists
@@ -1164,7 +1346,9 @@
             // Reset custom code UI
             document.getElementById('useCustomCode').checked = false;
             document.getElementById('customCodeContainer').style.display = 'none';
+            document.getElementById('advancedOptions').style.display = 'none';
             document.getElementById('customCodeInput').value = '';
+            document.getElementById('includeSymbols').checked = false;
         }
 
         function blobToBase64(blob) {
@@ -1245,11 +1429,20 @@
             document.getElementById('newSessionModal').style.display = 'none';
         });
         
+        // How it works modal
+        document.getElementById('howItWorksBtn').addEventListener('click', () => {
+            document.getElementById('howItWorksModal').style.display = 'flex';
+        });
+        
+        document.getElementById('closeHowItWorks').addEventListener('click', () => {
+            document.getElementById('howItWorksModal').style.display = 'none';
+        });
+        
         // Input validation
         document.getElementById('sessionCodeInput').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '');
-            if (e.target.value.length > 8) {
-                e.target.value = e.target.value.slice(0, 8);
+            // No restrictions on input for join modal
+            if (e.target.value.length > 32) {
+                e.target.value = e.target.value.slice(0, 32);
             }
         });
         
