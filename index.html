@@ -6,6 +6,7 @@
     <title>ClipShare • Secure Clipboard Sync</title>
     <link rel="icon" type="image/png" href="https://i.ibb.co/Wv3nwM9F/local-share-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -29,6 +30,14 @@
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             --glow: 0 0 15px rgba(108, 92, 231, 0.3);
+            --chat-bg: #ffffff;
+            --chat-header-bg: var(--primary);
+            --chat-header-text: #ffffff;
+            --chat-message-bg: #f1f1f1;
+            --chat-message-text: #333333;
+            --chat-input-bg: #ffffff;
+            --chat-icon-color: var(--primary);
+            --lite-input-bg: #e0e0e0;
         }
 
         [data-theme="dark"] {
@@ -51,6 +60,14 @@
             --footer-color: #636e72;
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             --glow: 0 0 15px rgba(125, 107, 255, 0.4);
+            --chat-bg: #2d3436;
+            --chat-header-bg: var(--primary);
+            --chat-header-text: #ffffff;
+            --chat-message-bg: #3a4042;
+            --chat-message-text: #f5f6fa;
+            --chat-input-bg: #3a4042;
+            --chat-icon-color: var(--primary);
+            --lite-input-bg: #333333;
         }
 
         * {
@@ -662,6 +679,451 @@
             font-size: 0.85rem;
         }
 
+        /* Updated Chat Widget Styles */
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            max-width: 400px;
+        }
+
+        /* Modern chat icon */
+        .chat-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            will-change: transform;
+        }
+
+        .chat-icon:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-icon .unread-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .chat-container {
+            display: none;
+            width: 350px;
+            height: 450px;
+            background: var(--chat-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+            transform: translateY(20px);
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+
+        .chat-container.show {
+            display: flex;
+            transform: translateY(0);
+            opacity: 1;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .chat-container.expanded {
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+
+        .chat-header {
+            background: var(--chat-header-bg);
+            color: var(--chat-header-text);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-header-btn {
+            background: transparent;
+            border: none;
+            color: var(--chat-header-text);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chat-header-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-break: break-word;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            will-change: transform;
+        }
+
+        .chat-message.sent {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .chat-message.received {
+            align-self: flex-start;
+            background: var(--chat-message-bg);
+            color: var(--chat-message-text);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .message-time {
+            font-style: italic;
+        }
+
+        .message-status {
+            margin-left: 5px;
+        }
+
+        .message-delete {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .message-copy {
+            position: absolute;
+            top: -8px;
+            right: 25px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chat-message:hover .message-delete,
+        .chat-message:hover .message-copy {
+            display: flex;
+        }
+
+        .chat-input-container {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            background: var(--chat-bg);
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            background: var(--chat-input-bg);
+            color: var(--text-primary);
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: none;
+            -webkit-appearance: none;
+        }
+
+        .chat-input:focus {
+            box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2);
+        }
+
+        .chat-input-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .chat-send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .chat-send-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .chat-extra-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chat-action-btn:hover {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .typing-indicator {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding-left: 15px;
+            height: 18px;
+            font-style: italic;
+        }
+
+        .username-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .username-modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .username-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 15px 0;
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        .username-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+        }
+
+        .close-modal-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .close-modal-btn:hover {
+            color: var(--danger);
+        }
+
+        /* Emoji Picker Styles */
+        .emoji-picker-container {
+            position: absolute;
+            bottom: 70px;
+            right: 15px;
+            width: 350px;
+            height: 400px;
+            z-index: 1001;
+            display: none;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+        }
+
+        .emoji-picker-container.show {
+            display: block;
+        }
+
+        /* Confirmation Modal Styles */
+        .confirmation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 4000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirmation-content {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .confirmation-message {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .confirmation-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .confirm-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .cancel-btn {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        /* Admin Password Modal */
+        .admin-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        /* Lite Mode Styles */
+        .lite-mode .chat-input {
+            background: var(--lite-input-bg);
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 25px;
@@ -708,6 +1170,28 @@
             .btn {
                 padding: 12px 20px;
             }
+
+            .chat-widget {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .chat-container {
+                width: 300px;
+                height: 400px;
+            }
+
+            .chat-container.expanded {
+                width: 100%;
+                height: 100%;
+            }
+
+            .emoji-picker-container {
+                width: 280px;
+                height: 350px;
+                right: 10px;
+                bottom: 60px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -731,6 +1215,27 @@
             
             .clipboard-section {
                 padding: 20px;
+            }
+
+            .chat-widget {
+                bottom: 15px;
+                right: 15px;
+            }
+
+            .chat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .chat-container {
+                width: 280px;
+                height: 380px;
+            }
+
+            .emoji-picker-container {
+                width: 260px;
+                height: 320px;
             }
         }
     </style>
@@ -805,6 +1310,68 @@
     
     <div class="footer">
         &copy; 2025 ClipShare. All rights reserved.
+    </div>
+
+    <!-- Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-icon" id="chatToggle">
+            <i class="fas fa-comment-alt"></i>
+            <span class="unread-count" id="unreadCount" style="display: none;">0</span>
+        </div>
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-header">
+                <span id="chatHeaderTitle">ClipShare Chat</span>
+                <div class="chat-header-actions">
+                    <button class="chat-header-btn" id="expandChatBtn" title="Expand">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button class="chat-header-btn" id="minimizeChatBtn" title="Minimize" style="display: none;">
+                        <i class="fas fa-compress"></i>
+                    </button>
+                    <button class="chat-header-btn" id="closeChatBtn" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="typing-indicator" id="typingIndicator"></div>
+            <div class="chat-input-container">
+                <textarea class="chat-input" id="chatInput" placeholder="Type a message..." rows="1"></textarea>
+                <div class="chat-input-actions">
+                    <div class="chat-extra-actions">
+                        <button class="chat-action-btn" id="emojiToggleBtn" title="Emoji">
+                            <i class="far fa-smile"></i>
+                        </button>
+                        <button class="chat-action-btn" id="liteModeBtn" title="Toggle Lite Mode">
+                            <i class="fas fa-adjust"></i>
+                        </button>
+                    </div>
+                    <button class="chat-send-btn" id="chatSendBtn">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="emoji-picker-container" id="emojiPickerContainer">
+            <emoji-picker></emoji-picker>
+        </div>
+    </div>
+
+    <!-- Username Modal -->
+    <div class="username-modal" id="usernameModal">
+        <div class="username-modal-content">
+            <button class="close-modal-btn" id="closeUsernameModal">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3><i class="fas fa-user-edit"></i> Choose a Username</h3>
+            <p>Enter a username to use in the chat. This will be visible to other participants.</p>
+            <input type="text" id="usernameInput" class="username-input" placeholder="Your username" maxlength="20">
+            <div class="modal-actions">
+                <button class="btn primary" id="saveUsernameBtn">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="modal" id="codeModal">
@@ -891,11 +1458,41 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div class="confirmation-modal" id="confirmationModal">
+        <div class="confirmation-content">
+            <div class="confirmation-message" id="confirmationMessage">Are you sure you want to delete this message?</div>
+            <div class="confirmation-buttons">
+                <button class="confirmation-btn confirm-btn" id="confirmDeleteBtn">Delete</button>
+                <button class="confirmation-btn cancel-btn" id="cancelDeleteBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Password Modal -->
+    <div class="admin-modal" id="adminModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-lock"></i> Admin Authentication</h3>
+            <p>Enter admin password to delete this message</p>
+            <input type="password" id="adminPasswordInput" class="admin-input" placeholder="Enter admin password">
+            <div class="modal-actions">
+                <button class="btn primary" id="confirmAdminBtn">
+                    <i class="fas fa-check"></i> Confirm
+                </button>
+                <button class="btn secondary" id="cancelAdminBtn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="notification" id="notification"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
     <script>
         // Firebase Config
@@ -913,12 +1510,23 @@
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
+        const storage = firebase.storage();
 
         // Session Management
         let currentSessionId = null;
         let lastClipData = null;
         let lastSentData = null;
         let isDarkMode = false;
+        let chatUsername = localStorage.getItem('clipShareChatUsername');
+        let unreadMessages = 0;
+        let isChatOpen = false;
+        let chatMessagesRef = null;
+        let chatMessagesListener = null;
+        let typingTimeout = null;
+        let isTyping = false;
+        let isLiteMode = localStorage.getItem('clipShareLiteMode') === 'true';
+        let pendingMessageId = null;
+        const adminPasswords = ["62332556", "55255525"];
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -932,6 +1540,21 @@
             auth.signInAnonymously().then(() => {
                 checkExistingSession();
             });
+
+            // Initialize chat listeners (but don't load messages yet)
+            setupChatListeners();
+
+            // Apply lite mode if enabled
+            if (isLiteMode) {
+                document.getElementById('chatContainer').classList.add('lite-mode');
+            }
+
+            // Check if we have a username
+            if (!chatUsername) {
+                showUsernameModal();
+            } else {
+                initChat();
+            }
         });
 
         // Theme Toggle
@@ -1009,8 +1632,6 @@
                     updateUI();
                     document.getElementById('codeModal').style.display = 'none';
                     showNotification("Joined session successfully!");
-                    
-                    // Don't automatically receive - wait for user to click
                 } else {
                     showNotification("Invalid session code", "error");
                 }
@@ -1026,8 +1647,6 @@
                         currentSessionId = savedSession;
                         updateUI();
                         showNotification("Reconnected to your session");
-                        
-                        // Don't automatically receive - wait for user to click
                     } else {
                         createNewSession();
                     }
@@ -1326,6 +1945,7 @@
             if (currentSessionId) {
                 try {
                     await db.ref(`sessions/${currentSessionId}/lastClip`).remove();
+                    await db.ref(`sessions/${currentSessionId}/chat`).remove();
                 } catch (e) {
                     console.log("Couldn't delete previous session data:", e);
                 }
@@ -1380,6 +2000,448 @@
                 
             notification.className = `notification ${type} show`;
             setTimeout(() => notification.className = 'notification', 3000);
+        }
+
+        // Chat Functions
+        function initChat() {
+            // Load existing messages if we have a session
+            if (currentSessionId) {
+                loadChatMessages();
+            }
+            return true;
+        }
+
+        function showUsernameModal() {
+            document.getElementById('usernameModal').style.display = 'flex';
+            document.getElementById('usernameInput').focus();
+        }
+
+        function saveUsername() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                showNotification("Please enter a username", "error");
+                return;
+            }
+            
+            chatUsername = username;
+            localStorage.setItem('clipShareChatUsername', username);
+            document.getElementById('usernameModal').style.display = 'none';
+            
+            // Now that we have a username, initialize the chat and open it
+            if (initChat()) {
+                openChat();
+            }
+        }
+
+        function setupChatListeners() {
+            // Chat toggle button
+            document.getElementById('chatToggle').addEventListener('click', function() {
+                // Check if we have a username
+                if (!chatUsername) {
+                    showUsernameModal();
+                    return;
+                }
+                
+                // Initialize chat if not already done
+                if (!chatMessagesRef) {
+                    initChat();
+                }
+                
+                toggleChat();
+            });
+            
+            // Close chat button
+            document.getElementById('closeChatBtn').addEventListener('click', closeChat);
+            
+            // Expand chat button
+            document.getElementById('expandChatBtn').addEventListener('click', expandChat);
+            
+            // Minimize chat button
+            document.getElementById('minimizeChatBtn').addEventListener('click', minimizeChat);
+            
+            // Send message button
+            document.getElementById('chatSendBtn').addEventListener('click', sendChatMessage);
+            
+            // Send message on Enter key (but allow Shift+Enter for new lines)
+            document.getElementById('chatInput').addEventListener('keydown', (e) => {
+                // Check if we're on mobile
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                if (e.key === 'Enter') {
+                    if (isMobile || !e.shiftKey) {
+                        e.preventDefault();
+                        sendChatMessage();
+                    }
+                }
+            });
+            
+            // Typing indicator
+            document.getElementById('chatInput').addEventListener('input', function() {
+                if (!isTyping) {
+                    isTyping = true;
+                    db.ref(`sessions/${currentSessionId}/typing/${generateDeviceId()}`).set({
+                        username: chatUsername,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+                
+                // Reset typing indicator after 3 seconds of inactivity
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    isTyping = false;
+                    db.ref(`sessions/${currentSessionId}/typing/${generateDeviceId()}`).remove();
+                }, 3000);
+                
+                // Auto-resize textarea
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+            
+            // Save username button
+            document.getElementById('saveUsernameBtn').addEventListener('click', saveUsername);
+            
+            // Close username modal button
+            document.getElementById('closeUsernameModal').addEventListener('click', function() {
+                document.getElementById('usernameModal').style.display = 'none';
+            });
+            
+            // Emoji picker button
+            document.getElementById('emojiToggleBtn').addEventListener('click', toggleEmojiPicker);
+            
+            // Lite mode toggle button
+            document.getElementById('liteModeBtn').addEventListener('click', toggleLiteMode);
+            
+            // Emoji picker selection
+            const picker = document.querySelector('emoji-picker');
+            picker.addEventListener('emoji-click', event => {
+                const input = document.getElementById('chatInput');
+                input.value += event.detail.unicode;
+                input.focus();
+            });
+            
+            // Drag and drop events
+            const chatContainer = document.getElementById('chatContainer');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                chatContainer.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            chatContainer.addEventListener('drop', handleDrop, false);
+            
+            // Confirmation modal buttons
+            document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDeleteMessage);
+            document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+                document.getElementById('confirmationModal').style.display = 'none';
+            });
+            
+            // Admin modal buttons
+            document.getElementById('confirmAdminBtn').addEventListener('click', confirmAdminAction);
+            document.getElementById('cancelAdminBtn').addEventListener('click', () => {
+                document.getElementById('adminModal').style.display = 'none';
+            });
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const text = dt.getData('text');
+            if (text) {
+                document.getElementById('chatInput').value = text;
+            }
+        }
+
+        function toggleEmojiPicker() {
+            const picker = document.getElementById('emojiPickerContainer');
+            picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleLiteMode() {
+            isLiteMode = !isLiteMode;
+            localStorage.setItem('clipShareLiteMode', isLiteMode);
+            document.getElementById('chatContainer').classList.toggle('lite-mode');
+            showNotification(`Lite mode ${isLiteMode ? 'enabled' : 'disabled'}`);
+        }
+
+        function toggleChat() {
+            if (isChatOpen) {
+                closeChat();
+            } else {
+                openChat();
+            }
+        }
+
+        function openChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            const chatIcon = document.getElementById('chatToggle');
+            
+            chatContainer.classList.add('show');
+            chatIcon.style.display = 'none';
+            isChatOpen = true;
+            
+            // Reset unread count when chat is opened
+            unreadMessages = 0;
+            updateUnreadCount();
+            
+            // Scroll to bottom
+            setTimeout(() => {
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 100);
+        }
+
+        function closeChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            const chatIcon = document.getElementById('chatToggle');
+            
+            chatContainer.classList.remove('show');
+            chatIcon.style.display = 'flex';
+            isChatOpen = false;
+        }
+
+        function expandChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.classList.add('expanded');
+            document.getElementById('expandChatBtn').style.display = 'none';
+            document.getElementById('minimizeChatBtn').style.display = 'block';
+            
+            // Scroll to bottom
+            setTimeout(() => {
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 100);
+        }
+
+        function minimizeChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.classList.remove('expanded');
+            document.getElementById('expandChatBtn').style.display = 'block';
+            document.getElementById('minimizeChatBtn').style.display = 'none';
+        }
+
+        function loadChatMessages() {
+            // Remove previous listener if it exists
+            if (chatMessagesListener) {
+                chatMessagesListener();
+            }
+            
+            chatMessagesRef = db.ref(`sessions/${currentSessionId}/chat`);
+            
+            // Clear existing messages
+            document.getElementById('chatMessages').innerHTML = '';
+            
+            // Set up listener for new messages
+            chatMessagesListener = chatMessagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
+                const message = snapshot.val();
+                addMessageToChat(message, snapshot.key);
+            });
+            
+            // Set up listener for typing indicators
+            db.ref(`sessions/${currentSessionId}/typing`).on('value', (snapshot) => {
+                const typingData = snapshot.val();
+                const typingIndicator = document.getElementById('typingIndicator');
+                
+                if (!typingData) {
+                    typingIndicator.textContent = '';
+                    return;
+                }
+                
+                const typingUsers = Object.values(typingData)
+                    .filter(user => user.username !== chatUsername)
+                    .map(user => user.username);
+                
+                if (typingUsers.length > 0) {
+                    if (typingUsers.length === 1) {
+                        typingIndicator.textContent = `${typingUsers[0]} is typing...`;
+                    } else if (typingUsers.length === 2) {
+                        typingIndicator.textContent = `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
+                    } else {
+                        typingIndicator.textContent = `${typingUsers[0]} and others are typing...`;
+                    }
+                } else {
+                    typingIndicator.textContent = '';
+                }
+            });
+        }
+
+        function addMessageToChat(message, messageId) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const isCurrentUser = message.senderId === generateDeviceId();
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message ${isCurrentUser ? 'sent' : 'received'}`;
+            
+            const deleteBtn = `<button class="message-delete" data-message-id="${messageId}" title="Delete message">
+                    <i class="fas fa-trash"></i>
+                </button>`;
+            
+            const copyBtn = `<button class="message-copy" data-message-text="${escapeHtml(message.text)}" title="Copy message">
+                    <i class="far fa-copy"></i>
+                </button>`;
+            
+            // Preserve line breaks by replacing them with <br> tags
+            const messageContent = message.text.replace(/\n/g, '<br>');
+            
+            messageElement.innerHTML = `
+                ${deleteBtn}
+                ${copyBtn}
+                <div class="message-text">${messageContent}</div>
+                <div class="message-meta">
+                    <span class="message-sender">${isCurrentUser ? 'You' : escapeHtml(message.sender)}</span>
+                    <span class="message-time">${formatTime(message.timestamp)}</span>
+                    ${isCurrentUser ? '<span class="message-status">✓✓</span>' : ''}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageElement);
+            
+            // Scroll to bottom if chat is open
+            if (isChatOpen) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else {
+                // Increment unread count if chat is closed
+                if (!isCurrentUser) {
+                    unreadMessages++;
+                    updateUnreadCount();
+                }
+            }
+            
+            // Add click handler for delete button
+            const deleteButton = messageElement.querySelector('.message-delete');
+            if (deleteButton) {
+                deleteButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showDeleteConfirmation(messageId, isCurrentUser);
+                });
+            }
+            
+            // Add click handler for copy button
+            const copyButton = messageElement.querySelector('.message-copy');
+            if (copyButton) {
+                copyButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const text = e.target.closest('.message-copy').dataset.messageText;
+                    navigator.clipboard.writeText(text);
+                    showNotification('Message copied to clipboard!');
+                });
+            }
+        }
+
+        function showDeleteConfirmation(messageId, isCurrentUser) {
+            pendingMessageId = messageId;
+            
+            if (isCurrentUser) {
+                document.getElementById('confirmationMessage').textContent = "Are you sure you want to delete your message?";
+                document.getElementById('confirmationModal').style.display = 'flex';
+            } else {
+                document.getElementById('adminModal').style.display = 'flex';
+                document.getElementById('adminPasswordInput').focus();
+            }
+        }
+
+        function confirmAdminAction() {
+            const password = document.getElementById('adminPasswordInput').value;
+            
+            if (adminPasswords.includes(password)) {
+                // Save admin password for this session
+                localStorage.setItem('clipShareAdminPassword', password);
+                document.getElementById('adminModal').style.display = 'none';
+                deleteMessage(pendingMessageId);
+            } else {
+                showNotification("Invalid admin password", "error");
+            }
+            
+            document.getElementById('adminPasswordInput').value = '';
+        }
+
+        function confirmDeleteMessage() {
+            if (!pendingMessageId) return;
+            deleteMessage(pendingMessageId);
+        }
+
+        function deleteMessage(messageId) {
+            if (!currentSessionId || !messageId) return;
+            
+            db.ref(`sessions/${currentSessionId}/chat/${messageId}`).remove()
+                .then(() => {
+                    showNotification("Message deleted", "success");
+                    document.getElementById('confirmationModal').style.display = 'none';
+                })
+                .catch((error) => {
+                    console.error("Error deleting message:", error);
+                    showNotification("Failed to delete message", "error");
+                });
+        }
+
+        async function sendChatMessage() {
+            if (!currentSessionId || !chatUsername) return;
+            
+            const input = document.getElementById('chatInput');
+            const messageText = input.value.trim();
+            
+            if (!messageText) {
+                showNotification("Message cannot be empty", "error");
+                return;
+            }
+            
+            // Create message object
+            const message = {
+                text: messageText,
+                sender: chatUsername,
+                senderId: generateDeviceId(),
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            // Push message to Firebase
+            db.ref(`sessions/${currentSessionId}/chat`).push(message)
+                .then(() => {
+                    // Clear input
+                    input.value = '';
+                    input.style.height = 'auto';
+                    
+                    // Clear typing indicator
+                    isTyping = false;
+                    db.ref(`sessions/${currentSessionId}/typing/${generateDeviceId()}`).remove();
+                    
+                    // Scroll to bottom
+                    const messagesContainer = document.getElementById('chatMessages');
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                })
+                .catch((error) => {
+                    console.error("Error sending message:", error);
+                    showNotification("Failed to send message", "error");
+                });
+        }
+
+        function updateUnreadCount() {
+            const unreadCountElement = document.getElementById('unreadCount');
+            
+            if (unreadMessages > 0) {
+                unreadCountElement.textContent = unreadMessages > 9 ? '9+' : unreadMessages;
+                unreadCountElement.style.display = 'flex';
+            } else {
+                unreadCountElement.style.display = 'none';
+            }
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         // Event Listeners
@@ -1451,6 +2513,11 @@
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
             }
+            
+            // Close emoji picker when clicking outside
+            if (!e.target.closest('#emojiPickerContainer') && !e.target.closest('#emojiToggleBtn')) {
+                document.getElementById('emojiPickerContainer').style.display = 'none';
+            }
         });
         
         // Keyboard shortcuts
@@ -1463,6 +2530,14 @@
                 document.querySelectorAll('.modal').forEach(modal => {
                     modal.style.display = 'none';
                 });
+                
+                // Also minimize chat if expanded
+                if (document.getElementById('chatContainer').classList.contains('expanded')) {
+                    minimizeChat();
+                }
+                
+                // Close emoji picker
+                document.getElementById('emojiPickerContainer').style.display = 'none';
             }
         });
     </script>
